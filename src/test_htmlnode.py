@@ -1,5 +1,5 @@
 import unittest
-from htmlnode import HTMLNode, LeafNode
+from htmlnode import HTMLNode, LeafNode, ParentNode
 
 
 class TestHTMLNode(unittest.TestCase):
@@ -49,6 +49,51 @@ class TestLeafNode(unittest.TestCase):
     def test_to_html_raises_value_error(self):
         with self.assertRaises(ValueError):
             LeafNode("p", None)
+
+
+class TestParentNode(unittest.TestCase):
+    def test_to_html_with_children(self):
+        child_node = LeafNode("span", "child")
+        parent_node = ParentNode("div", [child_node])
+        self.assertEqual(parent_node.to_html(), "<div><span>child</span></div>")
+
+    def test_to_html_with_grandchildren(self):
+        grandchild_node = LeafNode("b", "grandchild")
+        child_node = ParentNode("span", [grandchild_node])
+        parent_node = ParentNode("div", [child_node])
+        self.assertEqual(
+            parent_node.to_html(),
+            "<div><span><b>grandchild</b></span></div>",
+        )
+
+    def test_to_html_with_multiple_children(self):
+        child1 = LeafNode("p", "First child")
+        child2 = LeafNode("p", "Second child")
+        parent = ParentNode("div", [child1, child2])
+        self.assertEqual(
+            parent.to_html(), "<div><p>First child</p><p>Second child</p></div>"
+        )
+
+    def test_to_html_with_nested_parents(self):
+        inner_child = LeafNode("em", "Nested child")
+        inner_parent = ParentNode("span", [inner_child])
+        outer_parent = ParentNode("div", [inner_parent])
+        self.assertEqual(
+            outer_parent.to_html(), "<div><span><em>Nested child</em></span></div>"
+        )
+
+    def test_to_html_raises_value_error_for_missing_tag(self):
+        child = LeafNode("span", "Child")
+        with self.assertRaises(ValueError):
+            ParentNode(None, [child])
+
+    def test_to_html_raises_value_error_for_missing_children(self):
+        with self.assertRaises(ValueError):
+            ParentNode("div", None)
+
+    def test_to_html_raises_value_error_for_empty_children_list(self):
+        with self.assertRaises(ValueError):
+            ParentNode("div", [])
 
 
 if __name__ == "__main__":
